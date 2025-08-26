@@ -5,7 +5,7 @@ require("dotenv").config();
 
 // Ruta raíz amigable
 app.get("/", (req, res) => {
-  res.send("Servidor del bot funcionando 🚀");
+  res.send("Bot funcionando 🚀");
 });
 
 // Rutas del webhook

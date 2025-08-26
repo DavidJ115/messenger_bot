@@ -5,6 +5,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+//Generación de respuestas por meido de IA
 async function generarRespuesta(mensaje) {
   try {
     // Simulación para pruebas
