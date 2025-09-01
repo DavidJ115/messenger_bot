@@ -92,199 +92,244 @@ router.post("/webhook", async (req, res) => {
           (err) => { if (err) console.error("Error guardando mensaje:", err); }
         );
 
+
         let botReply = "";
+        const lowerText = userMsg.toLowerCase();
+
+      // // Intercepciones para consultas manuales del flujo
+        if (lowerText.includes("informacion") || lowerText.includes("información") || lowerText.includes("asesor")) {
+          botReply = { 
+            text: "Agradecemos tu interés 😊\nSelecciona tu departamento o presiona en 'Otro...' para escribirlo:",
+            quick_replies: departamentos
+          };
+          userStates[senderId].stage = "esperando_departamento";
+        } 
+        else if (lowerText.includes("requisitos")) {
+          botReply = {
+            text: "Requisitos para ingresar al CAE 📋:\n1️⃣ Edad: 18 a 38 años \n2️⃣ Haber completado la secundaria o tercer año del ciclo común \n3️⃣ Vocación de servicio \n\n"+
+                  "Documentos para matrícula 📋:\n✔️ 2 copias del título secundaria o certificado del tercer año de ciclo común, ambas caras \n✔️ 2 copias ampliadas del DNI \n✔️ Hoja de antecedentes penales vigentes \n✔️ Hoja de antecedentes policiales \n2 fotografías tamaño carnet \n\n"+
+                  "¿Te puedo ayudar con algo más? 😊",
+            quick_replies: mainOptions
+          };
+          userStates[senderId].stage = "main_menu";
+        } 
+        else if (lowerText.includes("ubicacion") || lowerText.includes("ubicaciones") || lowerText.includes("ubicados") || lowerText.includes("ubicación")) {
+          botReply = { 
+            text: "CAE cuenta con 9 sedes a nivel nacional\n\n📍 Selecciona la ubicación más conveniente:", 
+            quick_replies: sedes
+          };
+          userStates[senderId].stage = "esperando_ubicacion";
+        }
+
+      
+
 
         // Cancelación de flujo desde cualquier punto
-        const cancelKeywords = ["cancelar", "adios", "adiós", "hasta luego", "salir"];
+        const cancelKeywords = ["cancelar", "adios", "adiós", "hasta luego", "salir", "libre"];
         if (cancelKeywords.some(k => text.includes(k))) {
           userStates[senderId] = { stage: null, departamento: null, telefono: null };
-          botReply = `¡Entendido ${userName}! Espero haberte sido útil 👋 \nSi necesitas aún información solo di hola`; 
+          botReply = {text: `¡Entendido ${userName}! Espero haberte sido útil 👋 \nSi necesitas aún información solo di hola`,  quick_replies: mainOptions}; 
         } 
         else {
           // // Respuestas básicas si está activada la IA
           // // Cuando esta línea está activa se activará el menú inicial cuando detecte alguna de las palabras claves, caso contrario pasará a responder por medio de IA
 
-          // const responses = [
-          //   { keywords: ['hola', 'buenos días', 'buenos dias', 'buenas noches', 'buen dia', 'buenas tardes', 'buenas', 'información'], reply: `¡Hola ${userName}! 👋 Bienvenido al Chat Virtual de CAE\n\nSelecciona una opción:` }
-          // ];
+          const responses = [
+            { keywords: ['hola', 'buenos días', 'buenos dias', 'buenas noches', 'buen dia', 'buenas tardes', 'buenas'], reply: `¡Hola ${userName}! 👋 Bienvenido al Chat Virtual de CAE\n\nSelecciona una opción o di Salir para escritura libre:` }
+          ];
 
-          // for (const r of responses) {
-          //   for (const keyword of r.keywords) {
-          //     if (text.includes(keyword)) botReply = r.reply;
-          //   }
-          // }
+          if (!botReply) {
+            for (const r of responses) {
+              for (const keyword of r.keywords) {
+                if (text.includes(keyword)) {
+                  botReply = {text: r.reply,  quick_replies: mainOptions};
+                  break;
+                }
+              }
+              if (botReply) break;
+            }
+          }
 
 
           /*******/
           //Flujo//
           /*******/
 
+
+
           //Menú inicial: Saludo y opciones iniciales
-          if (botReply && botReply.includes("Selecciona una opción")) {
-            botReply = { text: botReply, quick_replies: mainOptions };
-            userStates[senderId].stage = "main_menu";
-          }
-          else if (userStates[senderId].stage === "main_menu") {
-
-            //Llamada a llenar la tabla de contacto si el usuario necesita más información
-            if (text === "mayor información" || text === "mayor_informacion") {
-              botReply = { 
-                text: "Selecciona tu departamento o presiona en 'Otro...' para escribirlo:",quick_replies: departamentos};
-                userStates[senderId].stage = "esperando_departamento";
-
-            //Llamada al mensaje predeterminado si el usuario quiere saber los requisitos    
-            } else if (text === "requisitos") {
-              botReply = {
-                text: "Requisitos para ingresar al CAE 📋:\n1️⃣ Edad: 18 a 38 años \n2️⃣ Haber completado la secundaria o tercer año del ciclo común \n3️⃣ Vocación de servicio \n\n"+
-                "Documentos para matricula 📋:\n✔️ 2 copias del título secundaria o certificado del tercer año de ciclo común, ambas caras \n✔️ 2 copias ampliadas del DNI \n✔️ Hoja de antecendentes penales vigentes \n✔️ Hoja de antecedentes policiales \n 2 fotografías tamaño carnet \n\n"+
-                "¿Te puedo ayudar con algo más? 😊", 
-                quick_replies: mainOptions
-              }
-
-            //Llamada a imprimir las sedes de CAE
-            }else if (text === "ubicaciones"){
-              botReply = {text: "📍 Selecciona la ubicación más conveniente:", quick_replies: sedes};
-              userStates[senderId].stage = "esperando_ubicacion";
-            }
-          }
-          //Llamada para que el usuario obtenga información de cada sede si ya seleccionó alguna
-          else if (userStates[senderId].stage === "esperando_ubicacion") {
-            const ubicaciones = {
-              cae_tegus: "🏢 C.A.E. Tegucigalpa\n\n📍 Antiguo Edificio del Instituto ALPHA, 2da av. Calle Real, Comayagüela\n\n📞 2220-6001 / 2220-7001 \n📱 9455-9672",
-              cae_sps: "🏢 C.A.E. San Pedro Sula\n\n📍 3ra ave, 11 calle SO, Barrio Lempira, Edif. Andalucía\n\n📞 2550-0397 / 2550-0395 \n📱 9455-6318",
-              cae_comayagua: "🏢 C.A.E. Comayagua\n\n📍 Blvd. Roberto Romero, antes de La Colonia, Iglesia Avance Misionero\n\n📞 2772-2063 \n📱 9452-8574",
-              cae_choluteca: "🏢 C.A.E. Choluteca\n\n📍 Barrio Cabañas, frente a Escuela Cabañas\n\n📞 2780-0272 \n📱 9455-9688",
-              cae_juticalpa: "🏢 C.A.E. Juticalpa\n\n📍 Barrio la Hoya, casa #231, frente a Instituto de la Propiedad\n\n📞 2785-1524 \n📱 3236-9335",
-              cae_laceiba: "🏢 C.A.E. La Ceiba\n\n📍 Edificio CAE, 2do nivel frente a Edificio Cosmo Centro\n\n📞 2442-2724 / 2442-2734 \n📱 9455-6876",
-              cae_danli: "🏢 C.A.E. Danlí\n\n📍 Barrio Buenos Aires, Instituto Cosme García, salida a El Paraíso\n\n📞 2763-5970 \n📱 9455-9332",
-              cae_sb: "🏢 C.A.E. Santa Bárbara\n\n📍 Barrio La Encantadora, salida a San Pedro Sula\n\n📞 2643-2949 \n📱 9455-7352",
-              cae_src: "🏢 C.A.E. Santa Rosa de Copán\n\n📍 Bo. Santa Teresa, contiguo a Sociedad Copaneca de Obreros\n\n📞 2662-6301 \n📱 9450-8618"
-            };
-
-            const quickPayload = event.message.quick_reply?.payload
-              ? String(event.message.quick_reply.payload).toLowerCase()
-              : null;
-
-            // Normalizador de texto si el usuario escribe a mano cada sede
-            const normalize = (s) =>
-              s
-                .normalize("NFD")                     
-                .replace(/[\u0300-\u036f]/g, "")     
-                .toLowerCase()
-                .replace(/\s+/g, "_");               
-
-            const titleToPayload = {
-              tegucigalpa: "cae_tegus",
-              san_pedro_sula: "cae_sps",
-              comayagua: "cae_comayagua",
-              choluteca: "cae_choluteca",
-              juticalpa: "cae_juticalpa",
-              la_ceiba: "cae_laceiba",
-              danli: "cae_danli",
-              santa_barbara: "cae_sb",
-              santa_rosa_de_copan: "cae_src"
-            };
-
-            const fromTitle = titleToPayload[ normalize(event.message.text || "") ];
-
-            const key = (quickPayload || fromTitle || "").toLowerCase();
-
-            //Impresión de datos de la sede seleccionada: ubicación y contactos
-            //Vuelve a mostrar menú inicial
-            if (key && ubicaciones[key]) {
-              botReply = { text: ubicaciones[key]+ "\n \n \n ¿Puedo ayudarte en algo más? 😊",quick_replies: mainOptions};
+          if (!botReply) {
+            if (botReply && typeof botReply === "string" && botReply.includes("Selecciona una opción")) {
+              botReply = { text: botReply, quick_replies: mainOptions };
               userStates[senderId].stage = "main_menu";
-            } else {
-              botReply = {
-                text: "Selecciona una ubicación válida 😅", quick_replies: sedes};
             }
-          
-          //Continuación de ciclo de más información, el cliente ingresa el departamento de donde es
-          }else if (userStates[senderId].stage === "esperando_departamento") {
-            const quickPayload = event.message.quick_reply?.payload 
-              ? String(event.message.quick_reply.payload).toLowerCase()
-              : null;
+            else if (userStates[senderId].stage === "main_menu") {
 
-            if (quickPayload && quickPayload !== "otro") {
-              // Guardamos el departamento y pedimos el número telefónico
-              userStates[senderId].departamento = quickPayload;
+              //Llamada a llenar la tabla de contacto si el usuario necesita más información
+              if (text === "mayor información" || text === "mayor_informacion" || text === "informacion" || text === "mayor informacion" || lowerText.includes("informacion") || lowerText.includes("información")) {
+                botReply = { 
+                  text: "Agradecemos tu interes 😊 \n Selecciona tu departamento o presiona en 'Otro...' para escribirlo:",quick_replies: departamentos};
+                  userStates[senderId].stage = "esperando_departamento";
+
+              //Llamada al mensaje predeterminado si el usuario quiere saber los requisitos    
+              } else if (text === "requisitos" || lowerText.includes("requisitos")) {
+                botReply = {
+                  text: "Requisitos para ingresar al CAE 📋:\n1️⃣ Edad: 18 a 38 años \n2️⃣ Haber completado la secundaria o tercer año del ciclo común \n3️⃣ Vocación de servicio \n\n"+
+                  "Documentos para matricula 📋:\n✔️ 2 copias del título secundaria o certificado del tercer año de ciclo común, ambas caras \n✔️ 2 copias ampliadas del DNI \n✔️ Hoja de antecendentes penales vigentes \n✔️ Hoja de antecedentes policiales \n 2 fotografías tamaño carnet \n\n"+
+                  "¿Te puedo ayudar con algo más? 😊", 
+                  quick_replies: mainOptions
+                }
+
+              //Llamada a imprimir las sedes de CAE
+              }else if (text === "ubicaciones" || lowerText.includes("ubicacion") || lowerText.includes("ubicaciones") || lowerText.includes("ubicados") || lowerText.includes("ubicación")){
+                botReply = {text: "CAE cuenta con 9 sedes a nivel nacional\n\n📍 Selecciona la ubicación más conveniente:", quick_replies: sedes};
+                userStates[senderId].stage = "esperando_ubicacion";
+              }
+            }
+            //Llamada para que el usuario obtenga información de cada sede si ya seleccionó alguna
+            else if (userStates[senderId].stage === "esperando_ubicacion") {
+              const ubicaciones = {
+                cae_tegus: "🏢 C.A.E. Tegucigalpa\n\n📍 Antiguo Edificio del Instituto ALPHA, 2da av. Calle Real, Comayagüela\n\n📞 2220-6001 / 2220-7001 \n📱 9455-9672",
+                cae_sps: "🏢 C.A.E. San Pedro Sula\n\n📍 3ra ave, 11 calle SO, Barrio Lempira, Edif. Andalucía\n\n📞 2550-0397 / 2550-0395 \n📱 9455-6318",
+                cae_comayagua: "🏢 C.A.E. Comayagua\n\n📍 Blvd. Roberto Romero, antes de La Colonia, Iglesia Avance Misionero\n\n📞 2772-2063 \n📱 9452-8574",
+                cae_choluteca: "🏢 C.A.E. Choluteca\n\n📍 Barrio Cabañas, frente a Escuela Cabañas\n\n📞 2780-0272 \n📱 9455-9688",
+                cae_juticalpa: "🏢 C.A.E. Juticalpa\n\n📍 Barrio la Hoya, casa #231, frente a Instituto de la Propiedad\n\n📞 2785-1524 \n📱 3236-9335",
+                cae_laceiba: "🏢 C.A.E. La Ceiba\n\n📍 Edificio CAE, 2do nivel frente a Edificio Cosmo Centro\n\n📞 2442-2724 / 2442-2734 \n📱 9455-6876",
+                cae_danli: "🏢 C.A.E. Danlí\n\n📍 Barrio Buenos Aires, Instituto Cosme García, salida a El Paraíso\n\n📞 2763-5970 \n📱 9455-9332",
+                cae_sb: "🏢 C.A.E. Santa Bárbara\n\n📍 Barrio La Encantadora, salida a San Pedro Sula\n\n📞 2643-2949 \n📱 9455-7352",
+                cae_src: "🏢 C.A.E. Santa Rosa de Copán\n\n📍 Bo. Santa Teresa, contiguo a Sociedad Copaneca de Obreros\n\n📞 2662-6301 \n📱 9450-8618"
+              };
+
+              const quickPayload = event.message.quick_reply?.payload
+                ? String(event.message.quick_reply.payload).toLowerCase()
+                : null;
+
+              // Normalizador de texto si el usuario escribe a mano cada sede
+              const normalize = (s) =>
+                s
+                  .normalize("NFD")                     
+                  .replace(/[\u0300-\u036f]/g, "")     
+                  .toLowerCase()
+                  .replace(/\s+/g, "_");               
+
+              const titleToPayload = {
+                tegucigalpa: "cae_tegus",
+                san_pedro_sula: "cae_sps",
+                comayagua: "cae_comayagua",
+                choluteca: "cae_choluteca",
+                juticalpa: "cae_juticalpa",
+                la_ceiba: "cae_laceiba",
+                danli: "cae_danli",
+                santa_barbara: "cae_sb",
+                santa_rosa_de_copan: "cae_src"
+              };
+
+              const fromTitle = titleToPayload[ normalize(event.message.text || "") ];
+
+              const key = (quickPayload || fromTitle || "").toLowerCase();
+
+              //Impresión de datos de la sede seleccionada: ubicación y contactos
+              //Vuelve a mostrar menú inicial
+              if (key && ubicaciones[key]) {
+                botReply = { text: ubicaciones[key]+ "\n \n \n ¿Puedo ayudarte en algo más? 😊",quick_replies: mainOptions};
+                userStates[senderId].stage = "main_menu";
+              } else {
+                botReply = {
+                  text: "Estas son nuestras sedes 👇  \n\nSelecciona la más conveniente para saber más información", quick_replies: sedes};
+              }
+            
+            //Continuación de ciclo de más información, el cliente ingresa el departamento de donde es
+            }else if (userStates[senderId].stage === "esperando_departamento") {
+              const quickPayload = event.message.quick_reply?.payload 
+                ? String(event.message.quick_reply.payload).toLowerCase()
+                : null;
+
+              if (quickPayload && quickPayload !== "otro") {
+                // Guardamos el departamento y pedimos el número telefónico
+                userStates[senderId].departamento = quickPayload;
+                botReply = "Ingresa tu número de teléfono (8 dígitos) 📱";
+                userStates[senderId].stage = "esperando_telefono";
+              
+              //Si es de otro departamento y selecciona otro, pide el ingreso manual
+              } else if (quickPayload === "otro") {
+                botReply = "Por favor escribe tu departamento 📝";
+                userStates[senderId].stage = "esperando_departamento_manual";
+              } else {
+                botReply = { 
+                  text: "Selecciona tu departamento", 
+                  quick_replies: departamentos 
+                };
+              }
+            }
+
+            //Llamado cuando el departamento es manual para continuar pidiendo el número telefónico
+            else if (userStates[senderId].stage === "esperando_departamento_manual") {
+              userStates[senderId].departamento = userMsg;
               botReply = "Ingresa tu número de teléfono (8 dígitos) 📱";
               userStates[senderId].stage = "esperando_telefono";
-            
-            //Si es de otro departamento y selecciona otro, pide el ingreso manual
-            } else if (quickPayload === "otro") {
-              botReply = "Por favor escribe tu departamento 📝";
-              userStates[senderId].stage = "esperando_departamento_manual";
-            } else {
-              botReply = { 
-                text: "Selecciona un departamento válido 😅", 
-                quick_replies: departamentos 
-              };
+            }
+            //Cuando llama a escribir el número ocurre el otro estado, donde estamos esperando la respuesta del cliente
+            //Pedimos número de 8 digitos
+            else if (userStates[senderId].stage === "esperando_telefono") {
+              const telRegex = /^\d{8}$/;
+              if (telRegex.test(text)) {
+                userStates[senderId].telefono = userMsg;
+                botReply = {
+                  text: "¿Deseas que nos comuniquemos contigo?",
+                  quick_replies: [
+                    { content_type: "text", title: "Sí", payload: "si_contactar" },
+                    { content_type: "text", title: "No", payload: "no_contactar" }
+                  ]
+                };
+                userStates[senderId].stage = "esperando_confirmacion";
+              } else {
+                //Solicita ingresar número nuevo si es más de 8 digitos
+                botReply = "Formato inválido. Ingresa un número de 8 dígitos 📱";
+              }
+            }
+            //Parte del ciclo si el cliente quiere ser contactado
+            else if (userStates[senderId].stage === "esperando_confirmacion") {
+
+              //Si el cliente quiere ser contactado
+              if (text === "sí" || text === "si" || text === "si_contactar") {
+                botReply = "¡Perfecto! Un asesor se comunicará contigo pronto 😊 \n\n ¿Puedo ayudarte en algo más?";
+                db.query(
+                  //Guardado de clientes a ser contactados en la table
+                  "INSERT INTO contactos (nombre, departamento, telefono) VALUES (?, ?, ?)",
+                  [userName, userStates[senderId].departamento, userStates[senderId].telefono],
+                  (err) => { if (err) console.error("Error guardando contacto:", err); }
+                );
+                userStates[senderId].stage = "main_menu";
+                botReply = { text: botReply, quick_replies: mainOptions };
+
+              //Si el cliente no quiere ser contactado
+              } else if (text === "no" || text === "no_contactar") {
+                botReply = "Entendido. ¿Hay algo más en lo que podamos ayudarte? 😊";
+                userStates[senderId].stage = "main_menu";
+                botReply = { text: botReply, quick_replies: mainOptions };
+              } else {
+                botReply = "Por favor selecciona una opción: Sí o No";
+              }
+            }
+
+            if (!botReply || (typeof botReply === "string" && botReply.trim() === "")) {
+
+              // //Respuesta si no está activa la respuesta por IA
+              // //Si está activo este código cuando el bot detecte que se envió un mensaje se activará el menú inicial
+              // botReply = { text: `¡Hola ${userName}! 👋 Bienvenido al Chat Virtual de CAE\n\nSelecciona una opción:` , quick_replies: mainOptions };
+              // userStates[senderId].stage = "main_menu";
+
+              // //Respuesta si está activada la respuesta por IA
+              // //Si está activada esta línea junto a las palabras claves iniciales permitirá que si no se ingresa la palabra clave inicial se busque por medio de IA
+      
+
+              const aiReply = await generarRespuesta(userMsg);
+
+              //Respuesta IA e impresión de menú inicial
+              botReply = { text: aiReply, quick_replies: mainOptions }; 
             }
           }
-
-          //Llamado cuando el departamento es manual para continuar pidiendo el número telefónico
-          else if (userStates[senderId].stage === "esperando_departamento_manual") {
-            userStates[senderId].departamento = userMsg;
-            botReply = "Ingresa tu número de teléfono (8 dígitos) 📱";
-            userStates[senderId].stage = "esperando_telefono";
-          }
-          //Cuando llama a escribir el número ocurre el otro estado, donde estamos esperando la respuesta del cliente
-          //Pedimos número de 8 digitos
-          else if (userStates[senderId].stage === "esperando_telefono") {
-            const telRegex = /^\d{8}$/;
-            if (telRegex.test(text)) {
-              userStates[senderId].telefono = userMsg;
-              botReply = {
-                text: "¿Deseas que nos comuniquemos contigo?",
-                quick_replies: [
-                  { content_type: "text", title: "Sí", payload: "si_contactar" },
-                  { content_type: "text", title: "No", payload: "no_contactar" }
-                ]
-              };
-              userStates[senderId].stage = "esperando_confirmacion";
-            } else {
-              //Solicita ingresar número nuevo si es más de 8 digitos
-              botReply = "Formato inválido. Ingresa un número de 8 dígitos 📱";
-            }
-          }
-          //Parte del ciclo si el cliente quiere ser contactado
-          else if (userStates[senderId].stage === "esperando_confirmacion") {
-
-            //Si el cliente quiere ser contactado
-            if (text === "sí" || text === "si" || text === "si_contactar") {
-              botReply = "¡Perfecto! Un asesor se comunicará contigo pronto 😊";
-              db.query(
-                //Guardado de clientes a ser contactados en la table
-                "INSERT INTO contactos (nombre_usuario, departamento, telefono) VALUES (?, ?, ?)",
-                [userName, userStates[senderId].departamento, userStates[senderId].telefono],
-                (err) => { if (err) console.error("Error guardando contacto:", err); }
-              );
-              userStates[senderId].stage = "main_menu";
-              botReply = { text: botReply, quick_replies: mainOptions };
-
-            //Si el cliente no quiere ser contactado
-            } else if (text === "no" || text === "no_contactar") {
-              botReply = "Entendido. ¿Hay algo más en lo que podamos ayudarte? 😊";
-              userStates[senderId].stage = "main_menu";
-              botReply = { text: botReply, quick_replies: mainOptions };
-            } else {
-              botReply = "Por favor selecciona una opción: Sí o No";
-            }
-          }
-          else if (!botReply) {
-
-            // //Respuesta si no está activa la respuesta por IA
-            // //Si está activo este código cuando el bot detecte que se envió un mensaje se activará el menú inicial
-            botReply = { text: `¡Hola ${userName}! 👋 Bienvenido al Chat Virtual de CAE\n\nSelecciona una opción:` , quick_replies: mainOptions };
-            userStates[senderId].stage = "main_menu";
-
-            // //Respuesta si está activada la respuesta por IA
-            // //Si está activada esta línea junto a las palabras claves iniciales permitirá que si no se ingresa la palabra clave inicial se busque por medio de IA
-            // const aiReply = await generarRespuesta(userMsg);
-            // botReply = aiReply;
-          }
-        }
+      }
 
         // Guardar respuesta del bot en otra tabla, así vemos el flujo conversional de los usuarios
         db.query(
