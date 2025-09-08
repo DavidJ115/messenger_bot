@@ -14,3 +14,6 @@ app.use("/", webhookRoutes);
 // Iniciar servidor
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+
+
+//Este HTML está básicamente vacío, simplemente utilizamos el enlace para poner operativo el bot
