@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Contactos - Dashboard Bot</title>
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="./contactos.css">
+
+</head>
+<body>
+
+<div id="header"></div>
+
+<main>
+  <h2>👥 Contactos</h2>
+
+  <label for="limiteContactos">Mostrar:</label>
+  <select id="limiteContactos">
+    <option value="25" selected>25</option>
+    <option value="50">50</option>
+    <option value="100">100</option>
+  </select> 
+
+  <button id="btnExportar" class="btn">💾 Guardar Excel </button>
+
+
+  <table id="tablaContactos">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th id="colDept">Departamento <span class="filter-trigger" data-target="dept">🔍</span></th>
+        <th>Teléfono</th>
+        <th id="colFecha">Fecha <span class="filter-trigger" data-target="fecha">🔍</span></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="paginacion" style="margin-top:20px;"></div>
+</main>
+
+<div id="popover-dept" class="popover" role="dialog" aria-hidden="true">
+  <div class="head">
+    <label>Filtrar Departamento</label>
+    <button id="clearDept" class="clear-btn" title="Limpiar filtro">✖</button>
+  </div>
+  <div class="body">
+    <input id="inputDept" type="text" placeholder="Nombre de departamento">
+  </div>
+  <div class="actions">
+    <button id="closeDept" class="btn btn-ghost">Cerrar</button>
+    <button id="applyDept" class="btn btn-primary">Aplicar</button>
+  </div>
+</div>
+
+<!-- Popover Fecha (rango) -->
+<div id="popover-fecha" class="popover" role="dialog" aria-hidden="true">
+  <div class="head">
+    <label>Filtrar Fecha (rango)</label>
+    <button id="clearFecha" class="clear-btn" title="Limpiar filtro">✖</button>
+  </div>
+  <div class="body">
+    <input id="inputFechaDesde" type="date">
+    <input id="inputFechaHasta" type="date">
+  </div>
+  <div class="actions">
+    <button id="closeFecha" class="btn btn-ghost">Cerrar</button>
+    <button id="applyFecha" class="btn btn-primary">Aplicar</button>
+  </div>
+</div>
+
+
+<div id="footer"></div>
+
+<script src="/layout.js"></script>
+<script src="contactos.js"></script>
+</body>
+</html>

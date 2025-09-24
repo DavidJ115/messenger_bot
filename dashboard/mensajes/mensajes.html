@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mensajes - Dashboard Bot</title>
+  <link rel="stylesheet" href="/global.css">
+</head>
+<body>
+  <div id="header"></div>
+
+  <main>
+    <h2>📩 Mensajes recibidos</h2>
+
+    <label for="limiteMensajes">Mostrar:</label>
+    <select id="limiteMensajes">
+      <option value="25" selected>25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+    
+    <table id="tablaMensajes">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Usuario</th>
+          <th>Mensaje</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div id="paginacionMensajes" style="margin-top:20px;"></div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script src="/layout.js"></script>
+  <script src="mensajes.js"></script>
+</body>
+</html>

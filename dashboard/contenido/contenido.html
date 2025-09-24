@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Contenido</title>
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="./contenido.css">
+
+</head>
+<body>
+
+  <div id="header"></div>
+
+  <main>
+    <h2>📰 Contenido</h2>
+    <button id="btnAgregar">➕ Agregar contenido</button>
+
+    <table id="tablaContenido">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Título</th>
+          <th>Texto</th>
+          <th>Fecha Inicio</th>
+          <th>Fecha Fin</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div id="paginacionContenido"></div>
+  </main>
+
+  <!-- Modal formulario -->
+  <div id="modalForm">
+    <div class="form-container">
+      <h3>Formulario de contenido</h3>
+      <form id="formContenido" onsubmit="guardarContenido(event)">
+        <input type="hidden" id="contenidoId">
+        <input type="text" id="titulo" placeholder="Título" required>
+        <textarea id="texto" placeholder="Texto" required></textarea>
+        <label>Fecha inicio: <input type="datetime-local" id="fecha_inicio"></label>
+        <label>Fecha fin: <input type="datetime-local" id="fecha_fin"></label>
+        <div style="margin-top:10px;">
+          <button type="submit" id="guardarBtn">Guardar</button>
+          <button type="button" id="cancelarBtn">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="footer"></div>
+
+  <script src="/layout.js"></script>
+  <script src="contenido.js"></script>
+
+  <script>
+    const modalForm = document.getElementById('modalForm');
+    const btnAgregar = document.getElementById('btnAgregar');
+    const btnCancelar = document.getElementById('cancelarBtn');
+
+    btnAgregar.addEventListener('click', () => {
+      modalForm.style.display = 'flex';
+      cancelarEdicion(); // limpiar formulario
+    });
+
+    btnCancelar.addEventListener('click', () => {
+      modalForm.style.display = 'none';
+      cancelarEdicion();
+    });
+
+    // Cerrar modal al hacer click fuera del formulario
+    // modalForm.addEventListener('click', (e) => {
+    //   if(e.target === modalForm) {
+    //     modalForm.style.display = 'none';
+    //     cancelarEdicion();
+    //   }
+    // });
+  </script>
+</body>
+</html>

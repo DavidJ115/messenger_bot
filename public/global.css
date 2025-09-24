@@ -1,0 +1,125 @@
+/* ====== Reset básico ====== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ====== Layout general ====== */
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
+  color: #333;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ====== Encabezado ====== */
+header {
+  background: #2c3e50;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+header h1 {
+  margin-bottom: 5px;
+}
+header p {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* ====== Navegación ====== */
+nav {
+  background: #34495e;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 15px 0;
+}
+nav a {
+  text-decoration: none;
+  color: white;
+  background: #3498db;
+  padding: 10px 20px;
+  border-radius: 6px;
+  transition: background 0.3s;
+  font-size: 16px;
+}
+nav a:hover {
+  background: #2980b9;
+}
+nav a.active {
+  background: #1abc9c;
+}
+
+/* ====== Contenido principal ====== */
+main {
+  flex: 1;
+  padding: 20px 40px;
+  max-width: 1200px;
+  margin: auto;
+}
+main h2 {
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+/* ====== Tablas ====== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+th {
+  background: #ecf0f1;
+}
+tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+/* ====== Formularios ====== */
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+form input, form textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+form button {
+  background: #3498db;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+form button:hover {
+  background: #2980b9;
+}
+
+/* ====== Pie de página ====== */
+footer {
+  background: #2c3e50;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  font-size: 14px;
+}
