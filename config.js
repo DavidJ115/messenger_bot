@@ -22,5 +22,7 @@ module.exports = {
     DB_NAME: process.env.DB_NAME || 'messenger_bot',
 
     //Llave de acceso a Open AI para respuestas automáticas
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+
+    APP_ID: process.env.APP_ID
 };

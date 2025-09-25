@@ -33,19 +33,23 @@ router.get("/webhook", (req, res) => {
 
 //Recepción de mensajes del webhook
 router.post("/webhook", async (req, res) => {
-  console.log("Webhook recibido:", JSON.stringify(req.body, null, 2));
+  
   const body = req.body;
+  console.log("Webhook recibido:", JSON.stringify(req.body, null, 2));
 
-  //Verificación de mensajes e ID de quien los manda.
-  if (body.object === "page") {
-    body.entry.forEach(async (entry) => {
-      const event = entry.messaging[0];
-      const senderId = event.sender.id;
+ if (body.object === "page") {
+    for (const entry of body.entry) {
+      const messagingEvents = entry.messaging || [];
+      const standbyEvents = entry.standby || [];
+      const events = [...messagingEvents, ...standbyEvents];;
 
-      if (event.message && event.message.text) {
-        const userMsg = event.message.text.trim();
+      for (const event of events) {
+        if (!event.message || event.message.is_echo) continue; // Ignorar echos
 
-        // Inicializar estado si no existe
+        const senderId = event.sender.id;
+        const userMsg = event.message.text ? event.message.text.trim() : "";
+
+        // Inicializar estado
         if (!userStates[senderId]) {
           userStates[senderId] = { TEL_REAL: null, DEP_REAL: null, flujo: null };
         }
@@ -70,7 +74,7 @@ router.post("/webhook", async (req, res) => {
           userStates[senderId].DEP_REAL = depEncontrado;
         }
 
-        // Obtener nombre real de Facebook
+        // Obtener nombre del usuario
         let userName = "Usuario";
         try {
           const profileRes = await fetch(
@@ -89,27 +93,22 @@ router.post("/webhook", async (req, res) => {
           (err) => { if (err) console.error("Error guardando mensaje:", err); }
         );
 
-        // Respuesta IA
+        // Generar respuesta IA
         let botReply = await generarRespuesta(userMsg, userStates[senderId]);
-
-        // Reemplazar variables con información real
         botReply = botReply
           .replace(/NOMBRE_USUARIO/g, userName)
           .replace(/DEP_REAL/g, userStates[senderId].DEP_REAL || "")
           .replace(/TEL_REAL/g, userStates[senderId].TEL_REAL || "");
 
-        // Verificar si IA pidió guardar contacto
+        // Guardar contacto si lo indica la IA
         let jsonContact = null;
         try { jsonContact = JSON.parse(botReply); } catch {}
-
         if (jsonContact && jsonContact.accion === "guardar_contacto") {
           db.query(
             "INSERT INTO contactos (nombre, departamento, telefono) VALUES (?, ?, ?)",
             [userName, userStates[senderId].DEP_REAL, userStates[senderId].TEL_REAL],
             (err) => { if (err) console.error("Error guardando contacto:", err); }
           );
-
-          // Resetear estado después de guardar
           userStates[senderId] = { TEL_REAL: null, DEP_REAL: null, flujo: null };
           botReply = `¡Perfecto ${userName}! Un asesor se comunicará contigo pronto 😊`;
         }
@@ -121,9 +120,27 @@ router.post("/webhook", async (req, res) => {
           (err) => { if (err) console.error("Error guardando mensaje bot:", err); }
         );
 
-        // Enviar mensajes al usuario de Messenger
+        // Tomar temporalmente control del hilo
         try {
           await fetch(
+            `https://graph.facebook.com/v21.0/me/take_thread_control?access_token=${process.env.PAGE_ACCESS_TOKEN}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                recipient: { id: senderId },
+                target_app_id: process.env.APP_ID,
+                metadata: "Tomando control temporal"
+              })
+            }
+          );
+        } catch (err) {
+          console.error("Error tomando control del hilo:", err);
+        }
+
+        // Enviar mensaje
+        try {
+          const sendRes = await fetch(
             `https://graph.facebook.com/v21.0/me/messages?access_token=${process.env.PAGE_ACCESS_TOKEN}`,
             {
               method: "POST",
@@ -134,17 +151,38 @@ router.post("/webhook", async (req, res) => {
               })
             }
           );
-          console.log(`Mensaje enviado a ${userName} (${senderId}):`, botReply);
+          const sendData = await sendRes.json();
+          if (sendData.error) console.error("Error enviando mensaje:", sendData.error);
+          else console.log(`Mensaje enviado a ${userName} (${senderId}):`, botReply);
         } catch (err) {
-          console.error("Error enviando mensaje a Messenger:", err);
+          console.error("Error enviando mensaje:", err);
+        }
+
+        // Devolver control al Primary Receiver
+        try {
+          await fetch(
+            `https://graph.facebook.com/v21.0/me/pass_thread_control?access_token=${process.env.PAGE_ACCESS_TOKEN}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                recipient: { id: senderId },
+                target_app_id: 263902037430900, // ID de la app Primary Receiver
+                metadata: "Devolviendo control al Primary Receiver"
+              })
+            }
+          );
+        } catch (err) {
+          console.error("Error devolviendo control al Primary Receiver:", err);
         }
       }
-    });
+    }
 
     res.status(200).send("EVENT_RECEIVED");
   } else {
     res.sendStatus(404);
   }
 });
+
 
 module.exports = router;

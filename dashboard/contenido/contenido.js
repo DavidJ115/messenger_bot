@@ -82,12 +82,13 @@ function editarContenido(id, titulo, texto, fecha_inicio, fecha_fin) {
 function cancelarEdicion() {
   editandoId = null;
   document.getElementById("formContenido").reset();
+  document.getElementById("contenidoId").value = "";
 }
 
 // Guardar contenido (crear o editar)
 async function guardarContenido(e) {
   e.preventDefault();
-  const id = document.getElementById("contenidoId").value;
+  const id = document.getElementById("contenidoId").value.trim();
   const titulo = document.getElementById("titulo").value;
   const texto = document.getElementById("texto").value;
   const fecha_inicio = document.getElementById("fecha_inicio").value || null;
