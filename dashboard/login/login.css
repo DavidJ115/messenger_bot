@@ -1,0 +1,83 @@
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f4f6f9;
+  font-family: Arial, sans-serif;
+}
+.login-card {
+  background: white;
+  padding: 40px 30px;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  animation: fadeIn 0.6s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.login-card input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+.login-card button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s, transform 0.2s;
+}
+.login-card button:hover {
+  background: #2980b9;
+  transform: translateY(-2px);
+}
+.login-card p {
+  font-size: 14px;
+  margin-top: 15px;
+  color: #666;
+}
+/* Contenedor de toasts */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+/* Toast individual */
+.toast {
+  min-width: 250px;
+  margin-bottom: 10px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateX(100%);
+  animation: slideIn 0.5s forwards, fadeOut 0.5s 3s forwards; /* entra y desaparece */
+}
+
+.toast.success { background: #2ecc71; }  /* verde */
+.toast.error { background: #e74c3c; }    /* rojo */
+
+@keyframes slideIn {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateX(100%); }
+}
+
