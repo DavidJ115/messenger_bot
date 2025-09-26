@@ -17,8 +17,11 @@ const openai = new OpenAI({
 
 //Función para extraer teléfono (8 dígitos exactos)
 function extraerTelefono(texto) {
-  const match = texto.match(/\b\d{8}\b/);
-  return match ? match[0] : null;
+  if (!texto) return null;
+  // Elimina todo lo que no sea dígito
+  const soloDigitos = texto.replace(/\D/g, "");
+  // Verifica si hay exactamente 8 dígitos
+  return soloDigitos.length === 8 ? soloDigitos : null;
 }
 
 //Función para filtrar contenido por fechas
@@ -51,8 +54,42 @@ async function generarRespuesta(mensaje, contextoUsuario) {
     //Filtrar contenidos vigentes por fecha
     const contenidosVigentes = filtrarPorFecha(contenidos);
 
+    // Obtención de información de sedes
+    const contenidosSedes = contenidosVigentes.filter(c =>
+        c.titulo.toLowerCase().includes("sede") ||
+        c.titulo.toLowerCase().includes("ubicación")
+    );   
+
     //Construir base de conocimiento como texto para GPT
-    const knowledgeBase = contenidosVigentes.map(c => `• ${c.titulo}: ${c.texto}`).join("\n");
+   // const knowledgeBase = contenidosVigentes.map(c => `• ${c.titulo}: ${c.texto}`).join("\n");
+
+    // Construir base de conocimiento de las sedes para GPT
+    const sedesTexto = contenidosSedes.length
+      ? contenidosSedes.map(s => `📍 ${s.titulo}: ${s.texto}`).join("\n")
+      : "Actualmente no hay información de sedes disponible.";        
+      
+    // Contenidos de promociones
+    const contenidosPromos = contenidosVigentes.filter(c =>
+        c.titulo.toLowerCase().includes("información") ||
+        c.titulo.toLowerCase().includes("campaña") ||
+        c.titulo.toLowerCase().includes("descuento")     
+    );
+    const promosTexto = contenidosPromos.length
+      ? contenidosPromos.map(p => {
+          const inicio = p.fecha_inicio ? new Date(p.fecha_inicio).toLocaleDateString("es-HN") : "No definida";
+          const fin = p.fecha_fin ? new Date(p.fecha_fin).toLocaleDateString("es-HN") : "No definida";
+          return `• ${p.titulo}: ${p.texto}\nVigencia: del ${inicio} al ${fin}.\n🎉 Esta es una PROMOCIÓN o DESCUENTO vigente.`;
+        }).join("\n")
+      : "Actualmente no hay promociones vigentes.";
+
+    //Construcción de base de de conocimientos general
+    const contenidosGenerales = contenidosVigentes.filter(c => !contenidosPromos.includes(c) && !contenidosSedes.includes(c));
+    const knowledgeBase = contenidosGenerales.map(c => {
+      const inicio = c.fecha_inicio ? new Date(c.fecha_inicio).toLocaleDateString("es-HN") : "No definida";
+      const fin = c.fecha_fin ? new Date(c.fecha_fin).toLocaleDateString("es-HN") : "No definida";
+      return `• ${c.titulo}: ${c.texto}\nVigencia: del ${inicio} al ${fin}.`;
+    }).join("\n");
+
 
     //Llamado a respuestas, definimos modelo y el rol a cumplir por la IA
     const response = await openai.chat.completions.create({
@@ -65,7 +102,7 @@ async function generarRespuesta(mensaje, contextoUsuario) {
           Usa solo nuestra base para responder sobre CAE.
           Cuando hables de CAE, refiérete como "nuestra".
 
-          🔹 Saludos:
+          *Saludos:
           - Saludo inicial:Si el usuario escribe exactamente "hola": 
             "¡Hola NOMBRE_USUARIO!👋💚 Bienvenido al C.A.E., donde comienza tu camino hacia un futuro lleno de oportunidades en salud. 🩺🏆
             ¿En qué puedo ayudarte? Hazme saber si necesitas obtener información personal o saber nuestras ubicaciones"
@@ -77,24 +114,29 @@ async function generarRespuesta(mensaje, contextoUsuario) {
             2220-7001.
             También puedes conocer más en nuestra página: www.cae.edu.hn 🌐"
               
-          🔹 Flujo de contacto (asesor o precios/mensualidades):
+          * Flujo de contacto (asesor o precios/mensualidades):
           - Palabras clave: 'informacion', 'información', 'asesor'. (Cierra el flujo de sedes por completo)
           - Al iniciar este flujo vacía las variables DEP_REAL y TEL_REAL. Nunca confundas mensajes anteriores como valor a estas variables
           - Paso 1: TELÉFONO → Debe ser 8 dígitos. Si ya existe, no pedir de nuevo.
           - Paso 2: DEPARTAMENTO → Lista válida de departamentos de Honduras (Recuerda que aquí puedes aceptarlo sin mayúsculas  o sin tildes). Si ya existe, no pedir de nuevo.
           - Si cuando estas pidiendo el departamento a un cliente y este coincide con una sede, no muestres la información de la sede sigue con la acción de guardar.
-          - Cuando tengas ambos ambos devuelve:
+          - Cuando tengas ambos devuelve:
             {"accion":"guardar_contacto","nombre":"NOMBRE_USUARIO","departamento":"DEP_REAL","telefono":"TEL_REAL"}
           - Una vez hecho el proceso de contacto, cierra este flujo por completo.
 
-          🔹 Reglas:
+
+          * Flujo de sedes:
+          - Si el usuario pregunta por las ubicaciones, muestra la información general.
+          - Responde con la información específica de una sede si el cliente la consulta directamente usando ${sedesTexto}.
+
+          * Reglas:
           - Para responder no tiene el usuario que poner explicitamente el titulo completo de la información, cualquier similitud o peticiones a información guardada, muestrala
           - Solo puedes estar en un flujo activo a la vez.
           - IMPORTANTE: siempre menciona las campañas y descuentos vigentes cuando el usuario pide información relacionada. Por ejemplo: si pregunta por prematrícula, revisar si hay campañas de descuento para la prematrícula e incluirlo en tus respuestas.
           - Si cambia de tema, olvida flujo anterior.
           - Si brindas una información que tenga fecha de vigencia, procura mencionar las fechas en tus respuestas.
           - No debes enlistar los departamentos cuando pides que se ingrese en el flujo de contacto.
-          - Siempre pregunta al final: "¿Te puedo ayudar en algo más?" (excepto si mandas JSON o si te envió un teléfono y le estás pidiendo que ingrese el departamento). 
+          - Siempre al final de cada mensaje menciona las promociones vigentes, toma la información de ${promosTexto} y pregunta: "¿Te puedo ayudar en algo más?" (excepto si mandas JSON o si te envió un teléfono y le estás pidiendo que ingrese el departamento). 
 
           Información:
           ${knowledgeBase}`

@@ -32,12 +32,11 @@ router.get("/webhook", (req, res) => {
 
 
 //Recepción de mensajes del webhook
-router.post("/webhook", async (req, res) => {
-  
+router.post("/webhook", async (req, res) => { 
   const body = req.body;
   console.log("Webhook recibido:", JSON.stringify(req.body, null, 2));
 
- if (body.object === "page") {
+  if (body.object === "page") {
     for (const entry of body.entry) {
       const messagingEvents = entry.messaging || [];
       const standbyEvents = entry.standby || [];
@@ -73,6 +72,7 @@ router.post("/webhook", async (req, res) => {
         if (depEncontrado && !userStates[senderId].DEP_REAL) {
           userStates[senderId].DEP_REAL = depEncontrado;
         }
+        
 
         // Obtener nombre del usuario
         let userName = "Usuario";
