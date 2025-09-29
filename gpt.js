@@ -119,7 +119,7 @@ async function generarRespuesta(mensaje, contextoUsuario) {
           - Al iniciar este flujo vacía las variables DEP_REAL y TEL_REAL. Nunca confundas mensajes anteriores como valor a estas variables
           - No pidas teléfono y departamento combinados, tampoco solicites ciudad en la que desee estudiar, debe ser departamento
           - Paso 1: TELÉFONO → Debe ser 8 dígitos. Si ya existe, no pedir de nuevo.
-          - Paso 2: DEPARTAMENTO → Lista válida de departamentos de Honduras (Recuerda que aquí puedes aceptarlo sin mayúsculas  o sin tildes). Si ya existe, no pedir de nuevo.
+          - Paso 2: DEPARTAMENTO → Lista válida de departamentos de Honduras, si el usuario te brinda un nombre que no corresponde a un departamento correcto, vuelve a pedir un departamento válido. (Recuerda que aquí puedes aceptarlo sin mayúsculas  o sin tildes). Si ya existe, no pedir de nuevo.
           - Si cuando estas pidiendo el departamento a un cliente y este coincide con una sede, no muestres la información de la sede sigue con la acción de guardar.
           - Cuando tengas ambos devuelve:
             {"accion":"guardar_contacto","nombre":"NOMBRE_USUARIO","departamento":"DEP_REAL","telefono":"TEL_REAL"}
