@@ -46,11 +46,21 @@ router.post("/webhook", async (req, res) => {
         if (!event.message || event.message.is_echo) continue; // Ignorar echos
 
         const senderId = event.sender.id;
+        
         const userMsg = event.message.text ? event.message.text.trim() : "";
 
         // Inicializar estado
         if (!userStates[senderId]) {
           userStates[senderId] = { TEL_REAL: null, DEP_REAL: null, flujo: null };
+        }
+
+        // Detectar intención para establecer flujo
+        if (/ubicaciones|sedes|ubicados|ubicacion|ubicación/i.test(userMsg)) {
+          userStates[senderId].flujo = "sedes";
+        } else if (/informacion|asesor|información/i.test(userMsg)) {
+          userStates[senderId].flujo = "contacto";
+          userStates[senderId].TEL_REAL = null;
+          userStates[senderId].DEP_REAL = null;
         }
 
         // Detección de teléfono
@@ -82,6 +92,7 @@ router.post("/webhook", async (req, res) => {
           );
           const profileData = await profileRes.json();
           userName = `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim() || "Usuario";
+          console.log(userName);
         } catch (err) {
           console.error("Error obteniendo nombre de usuario:", err);
         }
@@ -104,13 +115,17 @@ router.post("/webhook", async (req, res) => {
         let jsonContact = null;
         try { jsonContact = JSON.parse(botReply); } catch {}
         if (jsonContact && jsonContact.accion === "guardar_contacto") {
-          db.query(
-            "INSERT INTO contactos (nombre, departamento, telefono) VALUES (?, ?, ?)",
-            [userName, userStates[senderId].DEP_REAL, userStates[senderId].TEL_REAL],
-            (err) => { if (err) console.error("Error guardando contacto:", err); }
-          );
-          userStates[senderId] = { TEL_REAL: null, DEP_REAL: null, flujo: null };
-          botReply = `¡Perfecto ${userName}! Un asesor se comunicará contigo pronto 😊`;
+          if (userStates[senderId].flujo === "contacto") {
+            db.query(
+              "INSERT INTO contactos (nombre, departamento, telefono) VALUES (?, ?, ?)",
+              [userName, userStates[senderId].DEP_REAL, userStates[senderId].TEL_REAL],
+              (err) => { if (err) console.error("Error guardando contacto:", err); }
+            );
+            userStates[senderId] = { TEL_REAL: null, DEP_REAL: null, flujo: null };
+            botReply = `¡Perfecto ${userName}! Un asesor se comunicará contigo pronto 😊`;
+          } else {
+            console.log("Ignorando intento de guardar contacto fuera del flujo de contacto");
+          }
         }
 
         // Guardar mensaje del bot
