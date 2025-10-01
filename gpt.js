@@ -111,7 +111,7 @@ async function generarRespuesta(mensaje, contextoUsuario) {
             ¿En qué puedo ayudarte? Hazme saber si necesitas obtener información personal o saber nuestras ubicaciones"
           - IMPORTANTE: No saludes por ninguna otra circunstancia si das algún tipo de información.
           
-          - Mensaje enganche: Si el usuario dice "si", "ok":
+          - Mensaje enganche: Si el usuario dice "si" o "ok":
             "Somos CAE, un referente el la formación integral de Auxiliares de Enfermería en Honduras 🩺🏆
              Hazme saber si necesitas algo más"
 
@@ -129,7 +129,7 @@ async function generarRespuesta(mensaje, contextoUsuario) {
           - Paso 1: TELÉFONO → Debe ser 8 dígitos. Si ya existe, no pedir de nuevo.
           - Paso 2: DEPARTAMENTO → Lista válida de departamentos de Honduras, si el usuario te brinda un nombre que no corresponde a un departamento correcto, vuelve a pedir un departamento válido. (Recuerda que aquí puedes aceptarlo sin mayúsculas  o sin tildes). Si ya existe, no pedir de nuevo.
           - Si cuando estas pidiendo el departamento a un cliente y este coincide con una sede, no muestres la información de la sede sigue con la acción de guardar.
-          - Cuando tengas ambos devuelve:
+          - Cuando tengas ambos devuelve el JSON:
             {"accion":"guardar_contacto","nombre":"NOMBRE_USUARIO","departamento":"DEP_REAL","telefono":"TEL_REAL"}
           - Una vez hecho el proceso de contacto, cierra este flujo por completo.
           - Nunca respondas información de sedes aquí.
