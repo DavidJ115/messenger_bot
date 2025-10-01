@@ -198,6 +198,134 @@ router.post("/webhook", async (req, res) => {
     res.sendStatus(404);
   }
 });
+// ----------------EN PRUEBA -------------------//
+
+async function recuperarMensajesPendientes() {
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${process.env.PAGE_ID}/conversations?fields=participants,messages.limit(10){id,message,from,created_time}&access_token=${process.env.PAGE_ACCESS_TOKEN}`
+    );
+    const data = await res.json();
+
+    if (!data.data) {
+      console.log("No se encontraron conversaciones pendientes.");
+      return;
+    }
+
+    for (const conv of data.data) {
+      const mensajes = conv.messages?.data || [];
+
+      // Procesamos de más viejo a más nuevo
+      for (const msg of mensajes.reverse()) {
+        // ignorar si el mensaje lo envió la página misma
+        if (msg.from.id === process.env.PAGE_ID) continue;
+
+        // verificar si ya está en la DB
+        const existe = await new Promise((resolve) => {
+          db.query("SELECT id FROM mensajes WHERE id_fb = ?", [msg.id], (err, rows) => {
+            if (err) {
+              console.error("❌ Error consultando DB:", err);
+              return resolve(true); // asumimos que sí existe para evitar duplicados
+            }
+            resolve(rows.length > 0);
+          });
+        });
+
+        if (existe) continue;
+
+        console.log("⚡ Mensaje pendiente detectado:", msg);
+
+        // Inicializar estado si no existe
+        if (!userStates[msg.from.id]) {
+          userStates[msg.from.id] = { TEL_REAL: null, DEP_REAL: null, flujo: null, saludoEnviado: true };
+        }
+
+        // Guardar mensaje en DB
+        db.query(
+          "INSERT INTO mensajes (id_fb, sender_id, nombre_usuario, mensaje, from_bot, fecha) VALUES (?, ?, ?, ?, 0, ?)",
+          [msg.id, msg.from.id, msg.from.name, msg.message, msg.created_time],
+          (err) => { if (err) console.error("❌ Error guardando mensaje pendiente:", err); }
+        );
+
+        // Generar respuesta IA
+        let botReply = await generarRespuesta(msg.message, userStates[msg.from.id]);
+        botReply = botReply
+          .replace(/NOMBRE_USUARIO/g, msg.from.name)
+          .replace(/DEP_REAL/g, userStates[msg.from.id].DEP_REAL || "")
+          .replace(/TEL_REAL/g, userStates[msg.from.id].TEL_REAL || "");
+
+        // Guardar respuesta en DB
+        db.query(
+          "INSERT INTO mensajes (sender_id, nombre_usuario, mensaje, from_bot) VALUES (?, ?, ?, 1)",
+          [msg.from.id, msg.from.name, botReply],
+          (err) => { if (err) console.error("❌ Error guardando respuesta pendiente:", err); }
+        );
+
+       try {
+          await fetch(
+            `https://graph.facebook.com/v21.0/me/take_thread_control?access_token=${process.env.PAGE_ACCESS_TOKEN}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                recipient: { id: senderId },
+                target_app_id: process.env.APP_ID,
+                metadata: "Tomando control temporal"
+              })
+            }
+          );
+        } catch (err) {
+          console.error("Error tomando control del hilo:", err);
+        }
+
+        // Enviar mensaje
+        try {
+          const sendRes = await fetch(
+            `https://graph.facebook.com/v21.0/me/messages?access_token=${process.env.PAGE_ACCESS_TOKEN}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                recipient: { id: senderId },
+                message: { text: botReply }
+              })
+            }
+          );
+          const sendData = await sendRes.json();
+          if (sendData.error) console.error("Error enviando mensaje:", sendData.error);
+          else console.log(`Mensaje enviado a ${userName} (${senderId}):`, botReply);
+        } catch (err) {
+          console.error("Error enviando mensaje:", err);
+        }
+
+        // Devolver control al Primary Receiver
+        try {
+          await fetch(
+            `https://graph.facebook.com/v21.0/me/pass_thread_control?access_token=${process.env.PAGE_ACCESS_TOKEN}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                recipient: { id: senderId },
+                target_app_id: 263902037430900, // ID de la app Primary Receiver
+                metadata: "Devolviendo control al Primary Receiver"
+              })
+            }
+          );
+        } catch (err) {
+          console.error("Error devolviendo control al Primary Receiver:", err);
+        }
+
+        console.log("✅ Respondido mensaje pendiente de:", msg.from.name, "->", botReply);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Error recuperando mensajes pendientes:", err);
+  }
+}
+
+// Ejecutar recuperación de mensajes pendientes al iniciar
+setTimeout(recuperarMensajesPendientes, 5000);
 
 
 module.exports = router;
