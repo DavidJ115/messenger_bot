@@ -14,14 +14,18 @@
 <main>
   <h2>👥 Contactos</h2>
 
-  <label for="limiteContactos">Mostrar:</label>
-  <select id="limiteContactos">
-    <option value="25" selected>25</option>
-    <option value="50">50</option>
-    <option value="100">100</option>
-  </select> 
+  <div class="botones-acciones">
+    <label for="limiteContactos">Mostrar:</label>
+    <select id="limiteContactos">
+      <option value="25" selected>25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+      <option value="all">Todos</option>
+    </select> 
 
-  <button id="btnExportar" class="btn">💾 Guardar Excel </button>
+    <button id="btnExportar" class="btn btn-primary"> Guardar Excel </button>
+    <button id="btnEnviar" class="btn btn-primary">Enviar al CRM</button>
+  </div>
 
 
   <table id="tablaContactos">
@@ -29,7 +33,7 @@
       <tr>
         <th>ID</th>
         <th>Nombre</th>
-        <th id="colDept">Departamento <span class="filter-trigger" data-target="dept">🔍</span></th>
+        <th id="colDept">Sede <span class="filter-trigger" data-target="dept">🔍</span></th>
         <th>Teléfono</th>
         <th id="colFecha">Fecha <span class="filter-trigger" data-target="fecha">🔍</span></th>
       </tr>
@@ -42,11 +46,11 @@
 
 <div id="popover-dept" class="popover" role="dialog" aria-hidden="true">
   <div class="head">
-    <label>Filtrar Departamento</label>
+    <label>Filtrar Sede</label>
     <button id="clearDept" class="clear-btn" title="Limpiar filtro">✖</button>
   </div>
   <div class="body">
-    <input id="inputDept" type="text" placeholder="Nombre de departamento">
+    <input id="inputDept" type="text" placeholder="Ubicación de sede">
   </div>
   <div class="actions">
     <button id="closeDept" class="btn btn-ghost">Cerrar</button>
@@ -69,6 +73,45 @@
     <button id="applyFecha" class="btn btn-primary">Aplicar</button>
   </div>
 </div>
+
+
+
+<!-- Modal de vista previa -->
+<div id="modalPreview" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>Vista previa de contactos a enviar</h3>
+
+    <!-- Tabla con scroll -->
+    <div class="tabla-container">
+      <table id="tablaPreview">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Departamento</th>
+            <th>Teléfono</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Botones -->
+    <div class="acciones">
+      <button id="btnCancelar" class="btn btn-secondary">Cancelar</button>
+      <button id="btnConfirmar" class="btn btn-success">Confirmar Envío</button>
+    </div>
+
+    <!-- Loader -->
+    <div id="loaderEnvio" class="loader" style="display:none;">
+      <div class="spinner"></div>
+      <p>Enviando contactos al CRM...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Contenedor de toasts -->
+<div id="toast-container"></div>
 
 
 <div id="footer"></div>

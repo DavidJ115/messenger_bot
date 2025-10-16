@@ -6,6 +6,7 @@ const app = express();
 const webhookRoutes = require("./routes/webhook");
 const dashboardRoutes = require("./routes/dashboard");
 const loginRoutes = require("./routes/login");
+const envioCrmRoutes = require("./routes/envioCrm");
 
 require("dotenv").config();
 
@@ -27,6 +28,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", webhookRoutes);
 app.use("/", dashboardRoutes);
 app.use("/", loginRoutes);
+app.use("/api", envioCrmRoutes);
+
 
 // Middleware de autenticación
 function authMiddleware(req, res, next) {

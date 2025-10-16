@@ -24,7 +24,7 @@ async function cargarMensajes() {
           <td>${m.id}</td>
           <td>${m.nombre_usuario}</td>
           <td>${m.mensaje}</td>
-          <td>${m.fecha ? m.fecha : ''}</td>
+          <td>${formatearFecha(m.fecha ? m.fecha : '')}</td>
         </tr>
       `;
     }).join("");
@@ -43,6 +43,13 @@ function actualizarPaginacionMensajes(actual, total) {
     Página ${actual} de ${total}
     <button ${actual >= total ? "disabled" : ""} onclick="pagina++; cargarMensajes()">Siguiente ➡</button>
   `;
+}
+function formatearFecha(fechaISO) {
+  const fecha = new Date(fechaISO);
+  return fecha.toLocaleString("es-HN", {
+    dateStyle: "short",
+    timeStyle: "short"
+  });
 }
 
 // Carga inicial

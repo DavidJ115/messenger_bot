@@ -96,3 +96,126 @@ main {
     font-size:16px; 
     cursor:pointer; 
 }
+
+.modal {
+position: fixed;
+top: 0; left: 0; right: 0; bottom: 0;
+background: rgba(0,0,0,0.5);
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 9999;
+}
+
+.modal-content {
+background: #fff;
+border-radius: 10px;
+padding: 20px;
+max-width: 900px;
+width: 95%;
+box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+position: relative;
+}
+
+.botones-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+#selectCantidad {
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+
+.tabla-container {
+max-height: 400px;
+overflow-y: auto;
+border: 1px solid #ddd;
+border-radius: 5px;
+}
+
+#tablaPreview {
+width: 100%;
+border-collapse: collapse;
+}
+
+#tablaPreview th, #tablaPreview td {
+padding: 8px;
+border-bottom: 1px solid #ddd;
+text-align: left;
+}
+
+#tablaPreview th {
+background: #f3f3f3;
+position: sticky;
+top: 0;
+}
+
+.acciones {
+text-align: right;
+margin-top: 15px;
+}
+
+.btn {
+padding: 8px 15px;
+border: none;
+border-radius: 6px;
+cursor: pointer;
+}
+
+.btn-primary { background: #007bff; color: white; }
+.btn-secondary { background: #6c757d; color: white; }
+.btn-success { background: #28a745; color: white; }
+
+.loader {
+position: absolute;
+top: 0; left: 0;
+width: 100%; height: 100%;
+background: rgba(255,255,255,0.9);
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+}
+
+.spinner {
+border: 4px solid #ccc;
+border-top: 4px solid #28a745;
+border-radius: 50%;
+width: 40px;
+height: 40px;
+animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+to { transform: rotate(360deg); }
+}
+
+/* Toast individual */
+.toast {
+  min-width: 250px;
+  margin-bottom: 10px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateX(100%);
+  animation: slideIn 0.5s forwards, fadeOut 0.5s 3s forwards; /* entra y desaparece */
+}
+
+.toast.success { background: #2ecc71; }  /* verde */
+.toast.error { background: #e74c3c; }    /* rojo */
+
+/* Contenedor de toasts */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
